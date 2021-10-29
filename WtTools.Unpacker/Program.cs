@@ -28,6 +28,7 @@ namespace WtTools.Unpacker
             }
 
             Console.Clear();
+            Console.CursorVisible = false;
             Console.WriteLine($"Initializing...");
             if (string.IsNullOrEmpty(outputPath))
             {
