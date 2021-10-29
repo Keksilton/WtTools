@@ -17,16 +17,16 @@ namespace WtTools.Unpacker
             {
                 inputPath = args[0];
             }
-            else
-            {
-                throw new ArgumentNullException(nameof(inputPath));
-            }
 
             if (outputPath == null && args.Length > 1)
             {
                 outputPath = args[1];
             }
-
+            if(inputPath == null)
+            {
+                Console.WriteLine("Provide input file/folder");
+                return;
+            }
             Console.Clear();
             Console.CursorVisible = false;
             Console.WriteLine($"Initializing...");
