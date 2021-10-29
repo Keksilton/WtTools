@@ -8,6 +8,7 @@ using WtTools.Formats.Blk;
 using WtTools.Formats.Extensions;
 using ZstdNet;
 using Newtonsoft.Json.Linq;
+using System.Globalization;
 
 namespace WtTools.Formats
 {
@@ -197,10 +198,10 @@ namespace WtTools.Formats
                         {
                             DataType.Str => vValue,
                             DataType.Int => int.Parse(vValue),
-                            DataType.Float => float.Parse(vValue),
+                            DataType.Float => float.Parse(vValue, System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture),
                             DataType.Long => long.Parse(vValue),
                             DataType.Color => vValue.Split(',').Select(b => byte.Parse(b)).ToArray(),
-                            DataType.Vec2F or DataType.Vec3F or DataType.Vec4F => vValue.Split(',').Select(b => float.Parse(b)).ToArray(),
+                            DataType.Vec2F or DataType.Vec3F or DataType.Vec4F => vValue.Split(',').Select(b => float.Parse(b, System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture)).ToArray(),
                             DataType.Vec2 or DataType.Vec3 => vValue.Split(',').Select(b => uint.Parse(b)).ToArray(),
                             _ => throw new NotImplementedException($"Unrecognized type: {vType}")
                         };
