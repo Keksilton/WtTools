@@ -22,7 +22,7 @@ namespace WtTools.Unpacker
             {
                 outputPath = args[1];
             }
-            if(inputPath == null)
+            if (inputPath == null)
             {
                 Console.WriteLine("Provide input file/folder");
                 return;
