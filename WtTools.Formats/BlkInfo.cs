@@ -199,7 +199,7 @@ namespace WtTools.Formats
                             DataType.Int => int.Parse(vValue),
                             DataType.Float => float.Parse(vValue),
                             DataType.Long => long.Parse(vValue),
-                            DataType.Color => vValue.Split(',').Select(b=>byte.Parse(b)).ToArray(),
+                            DataType.Color => vValue.Split(',').Select(b => byte.Parse(b)).ToArray(),
                             DataType.Vec2F or DataType.Vec3F or DataType.Vec4F => vValue.Split(',').Select(b => float.Parse(b)).ToArray(),
                             DataType.Vec2 or DataType.Vec3 => vValue.Split(',').Select(b => uint.Parse(b)).ToArray(),
                             _ => throw new NotImplementedException($"Unrecognized type: {vType}")
@@ -213,7 +213,7 @@ namespace WtTools.Formats
         public string ToJSON()
         {
             var dict = Root.ToDictionary();
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(dict);
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(dict, Formatting.Indented);
             return json;
         }
 
