@@ -73,8 +73,7 @@ namespace WtTools.Unpacker
         static void UpdateLine(int index, string content)
         {
             Console.SetCursorPosition(0, index);
-            Console.Write(content.PadRight(Console.WindowWidth));
-            Console.SetCursorPosition(0, Console.WindowHeight);
+            Console.Write(content.PadRight(Math.Min(Console.WindowWidth, Console.BufferWidth)));
         }
 
         static void PrintException(Exception ex)
