@@ -65,8 +65,10 @@ namespace WtTools.Unpacker
 
         private void WorkerMethod(CancellationToken cancellationToken)
         {
+#if !DEBUG
             try
             {
+#endif
                 if (File.Exists(_inputPath))
                 {
                     var info = new FileInfo(_inputPath);
@@ -82,6 +84,7 @@ namespace WtTools.Unpacker
                 {
                     throw new ArgumentException($"Path: '{_inputPath}' doesn't exist");
                 }
+#if !DEBUG
             }
             catch (Exception ex)
             {
@@ -89,10 +92,13 @@ namespace WtTools.Unpacker
             }
             finally
             {
+#endif
                 TimeElapsed.Stop();
                 IsRunning = false;
                 _thread.Join(5000);
+#if !DEBUG
             }
+#endif
         }
 
         private void ProcessFiles(FileInfo[] files, string outputPath, CancellationToken cancellationToken)
