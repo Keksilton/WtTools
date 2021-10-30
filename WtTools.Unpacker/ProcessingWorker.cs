@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +13,7 @@ namespace WtTools.Unpacker
 
     public class ProcessingWorker : IDisposable
     {
-        public static readonly IReadOnlyCollection<string> SupportedExtensions = Array.AsReadOnly(new string[] { "vromfs.bin", "blk" });
+        public static readonly IReadOnlyCollection<string> SupportedExtensions = Array.AsReadOnly(new string[] { "vromfs.bin", "blk", "wrpl" });
 
         private bool _disposedValue;
         private Thread _thread;
@@ -116,11 +116,53 @@ namespace WtTools.Unpacker
                 {
                     ProcessBlk(files[i], outputPath, cancellationToken);
                 }
+                else if (files[i].Name.EndsWith(".wrpl"))
+                {
+                    ProcessWrpl(files[i], outputPath, cancellationToken);
+                }
             }
             if (!cancellationToken.IsCancellationRequested)
             {
                 FilesProcessed += 1;
             }
+        }
+
+        private void ProcessWrpl(FileInfo file, string outputPath, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(outputPath))
+            {
+                outputPath = _outputPath;
+            }
+            var data = File.ReadAllBytes(file.FullName);
+            var wrpl = new WrlpInfo(data);
+            var wrplOutPath = Path.Combine(outputPath, $"{file.Name}_u");
+            var dir = new DirectoryInfo(wrplOutPath);
+            if (!dir.Exists)
+            {
+                dir.Create();
+            }
+            var rez = string.Empty;
+            var mSet = string.Empty;
+            if (_targetFormat == TargetFormat.JSON)
+            {
+                rez = wrpl.Rez.ToJSON();
+                mSet = wrpl.MSet.ToJSON();
+            }
+            else if (_targetFormat == TargetFormat.Strict)
+            {
+                rez = wrpl.Rez.ToStrict();
+                mSet = wrpl.MSet.ToStrict();
+            }
+            var rezFilePath = Path.Combine(wrplOutPath, "rez.blkx");
+            var mSetFilePath = Path.Combine(wrplOutPath, "m_set.blkx");
+            var wrpluFilePath = Path.Combine(wrplOutPath, "wrplu.bin");
+            var ssidFilePath = Path.Combine(wrplOutPath, "ssid.txt");
+
+            _writeTasks.Add(File.WriteAllTextAsync(rezFilePath, rez, cancellationToken));
+            _writeTasks.Add(File.WriteAllTextAsync(mSetFilePath, mSet, cancellationToken));
+            _writeTasks.Add(File.WriteAllBytesAsync(wrpluFilePath, wrpl.Wrplu, cancellationToken));
+            _writeTasks.Add(File.WriteAllTextAsync(ssidFilePath, wrpl.Ssid.ToString(), cancellationToken));
+
         }
 
         private void ProcessBlk(FileInfo file, string outputPath, CancellationToken cancellationToken, VromfsInfo parent = null)
