@@ -42,6 +42,11 @@ namespace WtTools.Formats.Extensions
             return result;
         }
 
+        public static string ReadTerminatedString(this BinaryReader reader)
+        {
+            return reader.BaseStream.ReadTerminatedString();
+        }
+
         public static string ReadTerminatedString(this Stream reader)
         {
             using var ms = new MemoryStream();
