@@ -24,7 +24,7 @@ namespace WtTools.Formats
 
         internal bool NameMapExists => NameMap.Count > 0 || Parent.NameMap.Count > 0;
 
-        public BlkInfo(string name, byte[] data, VromfsInfo vromfs)
+        public BlkInfo(string name, byte[] data, VromfsInfo vromfs = null)
         {
             Name = name;
             Parent = vromfs;
@@ -63,7 +63,7 @@ namespace WtTools.Formats
                 case 4:
                 case 5:
                     using (var fileStream = new MemoryStream(data.AsMemory(1).ToArray()))
-                    using (var decompressionStream = new DecompressionStream(fileStream, Parent.DecompressionOptions))
+                    using (var decompressionStream = (Parent == null ? new DecompressionStream(fileStream) : new DecompressionStream(fileStream, Parent.DecompressionOptions)))
                     {
                         blkData = decompressionStream.ReadToEnd();
                     }

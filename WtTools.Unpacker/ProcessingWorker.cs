@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -106,11 +106,47 @@ namespace WtTools.Unpacker
                 {
                     ProcessVromfs(files[i], outputPath, cancellationToken);
                 }
+                else if (files[i].Name.EndsWith(".blk"))
+                {
+                    ProcessBlk(files[i], outputPath, cancellationToken);
+                }
             }
             if (!cancellationToken.IsCancellationRequested)
             {
                 FilesProcessed += 1;
             }
+        }
+
+        private void ProcessBlk(FileInfo file, string outputPath, CancellationToken cancellationToken, VromfsInfo parent = null)
+        {
+            var data = File.ReadAllBytes(file.FullName);
+            ProcessBlk(file.Name, data, outputPath, cancellationToken, parent);
+        }
+
+        private void ProcessBlk(string fileName, byte[] data, string outputPath, CancellationToken cancellationToken, VromfsInfo parent = null)
+        {
+            if (string.IsNullOrEmpty(outputPath))
+            {
+                outputPath = _outputPath;
+            }
+            var blk = new BlkInfo(fileName, data, parent);
+            var targetPath = Path.Combine(outputPath, fileName + "x");
+            var targetFile = new FileInfo(targetPath);
+            var targetDir = targetFile.Directory;
+            if (!targetDir.Exists)
+            {
+                targetDir.Create();
+            }
+            string content = string.Empty;
+            if (_targetFormat == TargetFormat.JSON)
+            {
+                content = blk.ToJSON();
+            }
+            else if (_targetFormat == TargetFormat.Strict)
+            {
+                content = blk.ToStrict();
+            }
+            _writeTasks.Add(File.WriteAllTextAsync(targetFile.FullName, content, cancellationToken));
         }
 
         private void ProcessVromfs(FileInfo file, string outputPath, CancellationToken cancellationToken)
@@ -143,27 +179,17 @@ namespace WtTools.Unpacker
                 }
                 if (vromfs.Files[j].Name.EndsWith(".blk") && vromfs.Files[j].Size > 0)
                 {
-                    var blk = new BlkInfo(vromfs.Files[j].Name, vromfs.Files[j].Data, vromfs);
-                    string content = string.Empty;
-                    if (_targetFormat == TargetFormat.JSON)
-                    {
-                        content = blk.ToJSON();
-                    }
-                    else if (_targetFormat == TargetFormat.Strict)
-                    {
-                        content = blk.ToStrict();
-                    }
-                    _writeTasks.Add(File.WriteAllTextAsync(targetFile.FullName, content));
+                    ProcessBlk(vromfs.Files[j].Name, vromfs.Files[j].Data, vromfsOutPath, cancellationToken, vromfs);
                 }
                 else
                 {
                     if (vromfs.Files[j].Size == 0)
                     {
-                        _writeTasks.Add(File.WriteAllTextAsync(targetFile.FullName, String.Empty));
+                        _writeTasks.Add(File.WriteAllTextAsync(targetFile.FullName, String.Empty, cancellationToken));
                     }
                     else
                     {
-                        _writeTasks.Add(File.WriteAllBytesAsync(targetFile.FullName, vromfs.Files[j].Data));
+                        _writeTasks.Add(File.WriteAllBytesAsync(targetFile.FullName, vromfs.Files[j].Data, cancellationToken));
                     }
                 }
             }
