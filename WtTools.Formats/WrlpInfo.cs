@@ -42,10 +42,10 @@ namespace WtTools.Formats
             }
             ReadHeader(reader);
             var mSet = reader.ReadBytes((int)_mSetSize);
-            MSet = new BlkInfo("mset.blk", mSet);
             var wrpluOffset = reader.BaseStream.Position;
             Wrplu = reader.ReadBytes((int)_rezOffset - (int)wrpluOffset);
             var rez = reader.ReadToEnd();
+            MSet = new BlkInfo("mset.blk", mSet);
             Rez = new BlkInfo("rez.blk", rez);
         }
 

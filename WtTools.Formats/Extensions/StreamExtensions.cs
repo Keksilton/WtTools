@@ -31,7 +31,6 @@ namespace WtTools.Formats.Extensions
                 result.Size = (ulong)reader.Read7BitEncodedInt64();
                 var raw = reader.ReadBytes((int)result.Size);
                 using var nmStream = new MemoryStream(raw);
-                //result.Names = raw.GetUTF8String().Split("\0").ToArray();
                 result.Names = new string[result.Count];
                 for (ulong i = 0; i < result.Count; ++i)
                 {
