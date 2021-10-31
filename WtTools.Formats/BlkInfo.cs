@@ -211,6 +211,8 @@ namespace WtTools.Formats
             return result;
         }
 
+        public Dictionary<string, object> ToDictionary() => Root.ToDictionary();
+
         public string ToJSON()
         {
             var dict = Root.ToDictionary();
