@@ -6,6 +6,8 @@ This project wouldn't be possible without [klensy/wt-tools](https://github.com/k
 I simply implemented them in C#.
 
 ## To do
+- [x] Support for .vromfs.bin
+- [x] Support for .blk
+- [x] Support for .wrpl
 - [ ] Full support for strict output
 - [ ] Add logging
-- [ ] Support for replay files
