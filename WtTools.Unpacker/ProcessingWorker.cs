@@ -13,7 +13,7 @@ namespace WtTools.Unpacker
 
     public class ProcessingWorker : IDisposable
     {
-        public static readonly IReadOnlyCollection<string> SupportedExtensions = Array.AsReadOnly(new string[] { "vromfs.bin", "blk" });
+        public static readonly IReadOnlyCollection<string> SupportedExtensions = Array.AsReadOnly(new string[] { "vromfs.bin", "blk", "wrpl" });
 
         private bool _disposedValue;
         private Thread _thread;
@@ -65,8 +65,10 @@ namespace WtTools.Unpacker
 
         private void WorkerMethod(CancellationToken cancellationToken)
         {
+#if !DEBUG
             try
             {
+#endif
                 if (File.Exists(_inputPath))
                 {
                     var info = new FileInfo(_inputPath);
@@ -82,6 +84,7 @@ namespace WtTools.Unpacker
                 {
                     throw new ArgumentException($"Path: '{_inputPath}' doesn't exist");
                 }
+#if !DEBUG
             }
             catch (Exception ex)
             {
@@ -89,10 +92,13 @@ namespace WtTools.Unpacker
             }
             finally
             {
+#endif
                 TimeElapsed.Stop();
                 IsRunning = false;
                 _thread.Join(5000);
+#if !DEBUG
             }
+#endif
         }
 
         private void ProcessFiles(FileInfo[] files, string outputPath, CancellationToken cancellationToken)
@@ -106,11 +112,89 @@ namespace WtTools.Unpacker
                 {
                     ProcessVromfs(files[i], outputPath, cancellationToken);
                 }
+                else if (files[i].Name.EndsWith(".blk"))
+                {
+                    ProcessBlk(files[i], outputPath, cancellationToken);
+                }
+                else if (files[i].Name.EndsWith(".wrpl"))
+                {
+                    ProcessWrpl(files[i], outputPath, cancellationToken);
+                }
             }
             if (!cancellationToken.IsCancellationRequested)
             {
                 FilesProcessed += 1;
             }
+        }
+
+        private void ProcessWrpl(FileInfo file, string outputPath, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(outputPath))
+            {
+                outputPath = _outputPath;
+            }
+            var data = File.ReadAllBytes(file.FullName);
+            var wrpl = new WrlpInfo(data);
+            var wrplOutPath = Path.Combine(outputPath, $"{file.Name}_u");
+            var dir = new DirectoryInfo(wrplOutPath);
+            if (!dir.Exists)
+            {
+                dir.Create();
+            }
+            var rez = string.Empty;
+            var mSet = string.Empty;
+            if (_targetFormat == TargetFormat.JSON)
+            {
+                rez = wrpl.Rez.ToJSON();
+                mSet = wrpl.MSet.ToJSON();
+            }
+            else if (_targetFormat == TargetFormat.Strict)
+            {
+                rez = wrpl.Rez.ToStrict();
+                mSet = wrpl.MSet.ToStrict();
+            }
+            var rezFilePath = Path.Combine(wrplOutPath, "rez.blkx");
+            var mSetFilePath = Path.Combine(wrplOutPath, "m_set.blkx");
+            var wrpluFilePath = Path.Combine(wrplOutPath, "wrplu.bin");
+            var ssidFilePath = Path.Combine(wrplOutPath, "ssid.txt");
+
+            _writeTasks.Add(File.WriteAllTextAsync(rezFilePath, rez, cancellationToken));
+            _writeTasks.Add(File.WriteAllTextAsync(mSetFilePath, mSet, cancellationToken));
+            _writeTasks.Add(File.WriteAllBytesAsync(wrpluFilePath, wrpl.Wrplu, cancellationToken));
+            _writeTasks.Add(File.WriteAllTextAsync(ssidFilePath, wrpl.Ssid.ToString(), cancellationToken));
+
+        }
+
+        private void ProcessBlk(FileInfo file, string outputPath, CancellationToken cancellationToken, VromfsInfo parent = null)
+        {
+            var data = File.ReadAllBytes(file.FullName);
+            ProcessBlk(file.Name, data, outputPath, cancellationToken, parent);
+        }
+
+        private void ProcessBlk(string fileName, byte[] data, string outputPath, CancellationToken cancellationToken, VromfsInfo parent = null)
+        {
+            if (string.IsNullOrEmpty(outputPath))
+            {
+                outputPath = _outputPath;
+            }
+            var blk = new BlkInfo(fileName, data, parent);
+            var targetPath = Path.Combine(outputPath, fileName + "x");
+            var targetFile = new FileInfo(targetPath);
+            var targetDir = targetFile.Directory;
+            if (!targetDir.Exists)
+            {
+                targetDir.Create();
+            }
+            string content = string.Empty;
+            if (_targetFormat == TargetFormat.JSON)
+            {
+                content = blk.ToJSON();
+            }
+            else if (_targetFormat == TargetFormat.Strict)
+            {
+                content = blk.ToStrict();
+            }
+            _writeTasks.Add(File.WriteAllTextAsync(targetFile.FullName, content, cancellationToken));
         }
 
         private void ProcessVromfs(FileInfo file, string outputPath, CancellationToken cancellationToken)
@@ -143,27 +227,17 @@ namespace WtTools.Unpacker
                 }
                 if (vromfs.Files[j].Name.EndsWith(".blk") && vromfs.Files[j].Size > 0)
                 {
-                    var blk = new BlkInfo(vromfs.Files[j].Name, vromfs.Files[j].Data, vromfs);
-                    string content = string.Empty;
-                    if (_targetFormat == TargetFormat.JSON)
-                    {
-                        content = blk.ToJSON();
-                    }
-                    else if (_targetFormat == TargetFormat.Strict)
-                    {
-                        content = blk.ToStrict();
-                    }
-                    _writeTasks.Add(File.WriteAllTextAsync(targetFile.FullName, content));
+                    ProcessBlk(vromfs.Files[j].Name, vromfs.Files[j].Data, vromfsOutPath, cancellationToken, vromfs);
                 }
                 else
                 {
                     if (vromfs.Files[j].Size == 0)
                     {
-                        _writeTasks.Add(File.WriteAllTextAsync(targetFile.FullName, String.Empty));
+                        _writeTasks.Add(File.WriteAllTextAsync(targetFile.FullName, String.Empty, cancellationToken));
                     }
                     else
                     {
-                        _writeTasks.Add(File.WriteAllBytesAsync(targetFile.FullName, vromfs.Files[j].Data));
+                        _writeTasks.Add(File.WriteAllBytesAsync(targetFile.FullName, vromfs.Files[j].Data, cancellationToken));
                     }
                 }
             }
