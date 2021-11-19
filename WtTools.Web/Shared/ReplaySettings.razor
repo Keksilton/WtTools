@@ -1,0 +1,28 @@
+﻿<div>
+    <table class="table caption-top">
+        <caption>Replay info</caption>
+        <tbody>
+            <tr>
+                <th>Author</th>
+                <td>@Replay.Info.Author</td>
+                <th>Server replay</th>
+                <td><a href="https://warthunder.com/en/tournament/replay/type/@(Replay.Wrpl.Ssid)">Link</a></td>
+            </tr>
+            <tr>
+                <th>Time played</th>
+                <td>@GetTimePlayed(Replay.Info.TimePlayed)</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>@Replay.Info.Status</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public WtTools.Web.Data.ReplayBinaryReader Replay { get; set; }
+
+    private string GetTimePlayed(float seconds) => TimeSpan.FromSeconds(seconds).ToString(@"hh\:mm\:ss");
+}

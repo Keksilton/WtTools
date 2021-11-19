@@ -1,0 +1,41 @@
+﻿<div class="btn-group @alignDrop">
+    <button class="btn @btnColor dropdown-toggle" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">@Caption</button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+        @foreach (var item in Items)
+        {
+            <li><button class="dropdown-item">@item</button></li>
+        }
+    </ul>
+</div>
+
+@code {
+    [Parameter]
+    public string Caption { get; set; } = string.Empty;
+    [Parameter]
+    public Data.Direction Direction { get; set; }
+    [Parameter]
+    public IEnumerable<string> Items { get; set; }
+    [Parameter]
+    public Data.Style BootstrapColor { get; set; } = Data.Style.Warning;
+
+    private string alignDrop => Direction switch
+    {
+        Data.Direction.Down => "dropdown",
+        Data.Direction.Up => "dropup",
+        Data.Direction.Start => "dropstart",
+        Data.Direction.End => "dropend",
+        _ => throw new NotImplementedException()
+    };
+
+    private string btnColor => BootstrapColor switch
+    {
+        Data.Style.Primary => "btn-primary",
+        Data.Style.Secondary => "btn-secondary",
+        Data.Style.Success => "btn-success",
+        Data.Style.Info => "btn-info",
+        Data.Style.Warning => "btn-warning",
+        Data.Style.Danger => "btn-danger",
+        _ => throw new NotImplementedException()
+    };
+
+}

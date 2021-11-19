@@ -69,21 +69,21 @@ namespace WtTools.Unpacker
             try
             {
 #endif
-                if (File.Exists(_inputPath))
-                {
-                    var info = new FileInfo(_inputPath);
-                    ProcessFiles(new FileInfo[] { info }, _outputPath, cancellationToken);
-                }
-                else if (Directory.Exists(_inputPath))
-                {
-                    var dirInfo = new DirectoryInfo(_inputPath);
-                    var files = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Where(x => SupportedExtensions.Any(y => x.Name.EndsWith($".{y}"))).ToArray();
-                    ProcessFiles(files, _outputPath, cancellationToken);
-                }
-                else
-                {
-                    throw new ArgumentException($"Path: '{_inputPath}' doesn't exist");
-                }
+            if (File.Exists(_inputPath))
+            {
+                var info = new FileInfo(_inputPath);
+                ProcessFiles(new FileInfo[] { info }, _outputPath, cancellationToken);
+            }
+            else if (Directory.Exists(_inputPath))
+            {
+                var dirInfo = new DirectoryInfo(_inputPath);
+                var files = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Where(x => SupportedExtensions.Any(y => x.Name.EndsWith($".{y}"))).ToArray();
+                ProcessFiles(files, _outputPath, cancellationToken);
+            }
+            else
+            {
+                throw new ArgumentException($"Path: '{_inputPath}' doesn't exist");
+            }
 #if !DEBUG
             }
             catch (Exception ex)
@@ -93,9 +93,9 @@ namespace WtTools.Unpacker
             finally
             {
 #endif
-                TimeElapsed.Stop();
-                IsRunning = false;
-                _thread.Join(5000);
+            TimeElapsed.Stop();
+            IsRunning = false;
+            _thread.Join(5000);
 #if !DEBUG
             }
 #endif
@@ -134,7 +134,7 @@ namespace WtTools.Unpacker
                 outputPath = _outputPath;
             }
             var data = File.ReadAllBytes(file.FullName);
-            var wrpl = new WrlpInfo(data);
+            var wrpl = new WrplInfo(data);
             var wrplOutPath = Path.Combine(outputPath, $"{file.Name}_u");
             var dir = new DirectoryInfo(wrplOutPath);
             if (!dir.Exists)
@@ -145,7 +145,7 @@ namespace WtTools.Unpacker
             var mSet = string.Empty;
             if (_targetFormat == TargetFormat.JSON)
             {
-                rez = wrpl.Rez.ToJSON();
+                rez = wrpl?.Rez?.ToJSON();
                 mSet = wrpl.MSet.ToJSON();
             }
             else if (_targetFormat == TargetFormat.Strict)
@@ -157,10 +157,15 @@ namespace WtTools.Unpacker
             var mSetFilePath = Path.Combine(wrplOutPath, "m_set.blkx");
             var wrpluFilePath = Path.Combine(wrplOutPath, "wrplu.bin");
             var ssidFilePath = Path.Combine(wrplOutPath, "ssid.txt");
-
-            _writeTasks.Add(File.WriteAllTextAsync(rezFilePath, rez, cancellationToken));
+            if (!string.IsNullOrEmpty(rez))
+            {
+                _writeTasks.Add(File.WriteAllTextAsync(rezFilePath, rez, cancellationToken));
+            }
             _writeTasks.Add(File.WriteAllTextAsync(mSetFilePath, mSet, cancellationToken));
-            _writeTasks.Add(File.WriteAllBytesAsync(wrpluFilePath, wrpl.Wrplu, cancellationToken));
+            if (wrpl.Wrplu != null)
+            {
+                _writeTasks.Add(File.WriteAllBytesAsync(wrpluFilePath, wrpl.Wrplu, cancellationToken));
+            }
             _writeTasks.Add(File.WriteAllTextAsync(ssidFilePath, wrpl.Ssid.ToString(), cancellationToken));
 
         }

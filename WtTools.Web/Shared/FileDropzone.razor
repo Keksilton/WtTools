@@ -1,0 +1,7 @@
+﻿<InputFile OnChange="@OnChange"></InputFile>
+
+@code {
+    [Parameter]
+    public EventCallback<InputFileChangeEventArgs> OnChange { get; set; }
+
+}

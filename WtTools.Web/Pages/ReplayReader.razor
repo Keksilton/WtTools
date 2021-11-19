@@ -1,0 +1,103 @@
+﻿@page "/reader/replay"
+
+@using System.IO;
+@using WtTools.Formats.Extensions;
+@using WtTools.Web.Data.Wrpl;
+@using Newtonsoft.Json;
+@using Newtonsoft.Json.Linq;
+@using WtTools.Web.Data;
+
+@inject HttpClient Http
+
+<div class="row">
+    <div class="col-4">
+        <FileDropzone OnChange="@LoadFile"></FileDropzone>
+    </div>
+    <div class="col-8">
+        @if (replay?.Settings != null)
+        {
+            <ReplaySettings Replay=@(replay)></ReplaySettings>
+        }
+    </div>
+
+
+    @*<div class="row">
+        <div class="col-12">
+
+            <p>@message</p>
+        </div>
+    </div>*@
+</div>
+<div class="row">
+    @if (replay != null)
+    {
+        <div class="col-6">
+            <Scoreboard AlignLeft=false PlayerInfos=players Players=allyTeam VehicleDictionary=names></Scoreboard>
+        </div>
+        <div class="col-6">
+            <Scoreboard AlignLeft=true PlayerInfos=players Players=enemyTeam VehicleDictionary=names></Scoreboard>
+        </div>
+    }
+</div>
+
+
+@code {
+    private string message = string.Empty;
+    private string content = string.Empty;
+
+    private Dictionary<string, string> names;
+
+    private WtTools.Web.Data.ReplayBinaryReader replay;
+    private List<PlayerStat> allyTeam => replay?.Friendlies;
+    private List<PlayerStat> enemyTeam => replay?.Enemies;
+    private Dictionary<string, Player> players => replay?.Info?.UiScriptsData?.PlayersInfo;
+
+
+    private async Task LoadFile(InputFileChangeEventArgs e)
+    {
+        Console.WriteLine("Loading file...");
+        Console.WriteLine(names?.Count);
+        message = $"Processing {e.File.Name}";
+        if (message.EndsWith(".wrpl"))
+        {
+            try
+            {
+                var data = await ReadFileAsync(e.File);
+                if (WtTools.Web.Data.ReplayBinaryReader.VerifyMagic(data))
+                {
+                    replay = new (data);
+                }
+                else
+                {
+                    message = $"{e.File.Name}, unknown magic word";
+                }
+                message = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(JsonConvert.SerializeObject(ex, Formatting.Indented));
+
+                message = $"An error occured while reading {e.File.Name}. Please report this issue.";
+            }
+        }
+        else
+        {
+            message = $"{e.File.Name}, extension is not supported";
+        }
+    }
+
+    private async Task<byte[]> ReadFileAsync(IBrowserFile file)
+    {
+        using var stream = file.OpenReadStream(maxAllowedSize: 15_000_000);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var data = ms.ToArray();
+        return data;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        names = await Http.GetFromJsonAsync<Dictionary<string, string>>("data/units_en.json");
+    }
+}

@@ -1,0 +1,100 @@
+﻿@using WtTools.Web.Data.Wrpl;
+<div>
+    <table class="table @alignClass">
+        <thead>
+            <tr>
+                @if (AlignLeft)
+                {
+                    <th>Vehicles</th>
+                    <th>Squad</th>
+                    <th colspan="6">Name</th>
+                    <th>Score</th>
+                    <th>Air Kills</th>
+                    <th>Ground Kills</th>
+                    <th>Assists</th>
+                    <th>Deaths</th>
+                }
+                else
+                {
+                    <th>Deaths</th>
+                    <th>Assists</th>
+                    <th>Ground Kills</th>
+                    <th>Air Kills</th>
+                    <th>Score</th>
+                    <th colspan="6">Name</th>
+                    <th>Squad</th>
+                    <th>Vehicles</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Players.Count; ++i)
+            {
+                <tr>
+                    @if (AlignLeft)
+                    {
+                        <td>
+                            <DropdownList Caption=@PlayerInfos[$"__int_{Players[i].UserId}"].Crafts_info.Length.ToString().PadLeft(2) Items=@PlayerInfos[$"__int_{Players[i].UserId}"].Crafts_info.Select(c => c.Name).Select(n=>GetVehicleName(n)) BootstrapColor="Data.Style.Warning" Direction="Data.Direction.Start"></DropdownList>
+                        </td>
+                        <td>@Players[i].SquadId</td>
+                        <td colspan="6"><a href="@($"https://thunderskill.com/en/stat/{Players[i].Name}")">@($"{@Players[i].ClanTag} {Players[i].Name}")</a></td>
+                        <td>@Players[i].Score</td>
+                        <td>@Players[i].Kills</td>
+                        <td>@Players[i].GroundKills</td>
+                        <td>@Players[i].Assists</td>
+                        <td>@Players[i].Deaths</td>
+                    }
+                    else
+                    {
+                        <td>@Players[i].Deaths</td>
+                        <td>@Players[i].Assists</td>
+                        <td>@Players[i].GroundKills</td>
+                        <td>@Players[i].Kills</td>
+                        <td>@Players[i].Score</td>
+                        <td colspan="6"><a href="@($"https://thunderskill.com/en/stat/{Players[i].Name}")">@($"{@Players[i].ClanTag} {Players[i].Name}")</a></td>
+                        <td>@Players[i].SquadId</td>
+                        <td>
+                            <DropdownList Caption=@PlayerInfos[$"__int_{Players[i].UserId}"].Crafts_info.Length.ToString().PadLeft(2) Items=@PlayerInfos[$"__int_{Players[i].UserId}"].Crafts_info.Select(c => c.Name).Select(n=>GetVehicleName(n)) BootstrapColor="Data.Style.Warning" Direction="Data.Direction.End"></DropdownList>
+                        </td>
+                    }
+                    @*<div class="row">
+                        <div id="collapse@(i)" class="collapse overflow-hidden flex-row">
+                        @foreach (var vehicle in PlayerInfos[$"__int_{Players[i].UserId}"].Crafts_info.Select(c => c.Name))
+                        {
+                        <div class="col-lg-3 col-md-4">@GetVehicleName(vehicle)</div>
+                        }
+                        </div>
+                        </div>*@
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public List<PlayerStat> Players { get; set; }
+    [Parameter]
+    public Dictionary<string, Player> PlayerInfos { get; set; }
+    [Parameter]
+    public bool AlignLeft { get; set; }
+    [Parameter]
+    public Dictionary<string, string> VehicleDictionary { get; set; }
+
+    private string alignClass => AlignLeft ? "text-start" : "text-end";
+    private string colorClass => AlignLeft ? "border-danger" : "border-primary";
+
+    private string GetVehicleName(string id)
+    {
+        if (VehicleDictionary.TryGetValue(id, out string name))
+        {
+            return name;
+        }
+        else
+        {
+            return id;
+
+        }
+    }
+
+}

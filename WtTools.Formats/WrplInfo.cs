@@ -9,7 +9,7 @@ using ZstdNet;
 
 namespace WtTools.Formats
 {
-    public class WrlpInfo
+    public class WrplInfo
     {
         public uint Version { get; private set; }
         public string Level { get; private set; }
@@ -28,26 +28,34 @@ namespace WtTools.Formats
         public BlkInfo Rez { get; private set; }
         public byte[] Wrplu { get; private set; }
 
+        private const uint MAGIC = 0x1000ace5;
         private uint _rezOffset;
         private uint _mSetSize;
 
 
-        public WrlpInfo(byte[] data)
+        public WrplInfo(byte[] data)
         {
             using var ms = new MemoryStream(data);
             using var reader = new BinaryReader(ms);
             var magic = reader.ReadUInt32();
-            if (magic != 0x1000ace5)
+            if (!VerifyMagic(data))
             {
                 throw new ArgumentException($"Unknown MAGIC word {magic:x}");
             }
             ReadHeader(reader);
             var mSet = reader.ReadBytes((int)_mSetSize);
             var wrpluOffset = reader.BaseStream.Position;
-            Wrplu = reader.ReadBytes((int)_rezOffset - (int)wrpluOffset);
-            var rez = reader.ReadToEnd();
+            if (_rezOffset > 0)
+            {
+                Wrplu = reader.ReadBytes((int)_rezOffset - (int)wrpluOffset);
+                var rez = reader.ReadToEnd();
+                Rez = new BlkInfo("rez.blk", rez);
+            }
+            else
+            {
+                Wrplu = reader.ReadToEnd();
+            }
             MSet = new BlkInfo("mset.blk", mSet);
-            Rez = new BlkInfo("rez.blk", rez);
         }
 
         private void ReadHeader(BinaryReader reader)
@@ -71,6 +79,11 @@ namespace WtTools.Formats
             _ = reader.ReadBytes(48);
             BattleType = reader.ReadBytes(128).ToUTF8String().Trim('\0');
             BattleKillStreak = reader.ReadBytes(128).ToUTF8String().Trim('\0');
+        }
+
+        public static bool VerifyMagic(byte[] data)
+        {
+            return BitConverter.ToUInt32(data.AsSpan()[0..4]) == MAGIC;
         }
     }
 }

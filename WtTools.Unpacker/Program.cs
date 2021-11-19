@@ -10,7 +10,7 @@ namespace WtTools.Unpacker
 {
     internal class Program
     {
-        static void Main(string inputPath = null, string outputPath = null, params string[] args)
+        static void Main(string inputPath = null, string outputPath = null, bool generateExta = false, params string[] args)
         {
             Console.Title = "WtTools.Unpacker";
             if (inputPath == null && args.Length > 0)
