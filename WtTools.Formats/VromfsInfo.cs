@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -50,8 +50,11 @@ namespace WtTools.Formats
                 ExtHeader = new ExtHeader(reader);
             }
             var data = reader.ReadToEnd();
-            data = Deobfuscate(data);
-            data = Decompress(data);
+            if (Header.PackageType != VromfsPackageType.NotPacked)
+            {
+                data = Deobfuscate(data);
+                data = Decompress(data);
+            }
             ReadFiles(data);
         }
         
