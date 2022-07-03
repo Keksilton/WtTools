@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Bson;
+using Newtonsoft.Json.Bson;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -139,10 +139,20 @@ namespace WtTools.Formats
 
         internal string GetStringValue(int index)
         {
-            if (NameMap.Count > 0)
+            if (NameMap.Count > (ulong)index)
+            {
                 return NameMap[index];
-            else
+            }
+            else if (Parent?.NameMap.Count > (ulong)index)
+            {
                 return Parent.NameMap[index];
+            }
+            else
+            {
+                var lgd = LargeData.Slice(index);
+                lgd = lgd.Slice(0, lgd.IndexOf((byte)0));
+                return lgd.ToArray().ToUTF8String();
+            }
         }
 
         private BlockInfo ParseText(string[] lines, int offset = 0)

@@ -25,16 +25,7 @@ namespace WtTools.Formats.Blk
             {
                 case DataType.Str:
                     var strIndex = index - (data[7] << 24);
-                    if (blk.Parent == null)
-                    {
-                        var lgd = blk.LargeData.Slice(strIndex);
-                        lgd = lgd.Slice(0, lgd.IndexOf((byte)0));
-                        Value = lgd.ToArray().ToUTF8String();
-                    }
-                    else
-                    {
                         Value = blk.GetStringValue(strIndex);
-                    }
                     break;
                 case DataType.Int:
                     Value = (data[4] | (data[5] << 8) | (data[6] << 16) | (data[7] << 24));
@@ -115,7 +106,7 @@ namespace WtTools.Formats.Blk
                     Value = data[4] == 1;
                     break;
                 default:
-                    throw new Exception($"Unknown type: {data[3]:x}");
+                    throw new Exception($"Unknown type: 0x{data[3]:x}");
             };
             Name = blk.GetStringValue(Id);
         }
