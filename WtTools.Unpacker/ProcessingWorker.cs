@@ -235,9 +235,13 @@ namespace WtTools.Unpacker
                 bool processAsBlk = vromfs.Files[j].Name.EndsWith(".blk") && vromfs.Files[j].Size > 0;
                 if (processAsBlk)
                 {
+#if !DEBUG
                     try
                     {
+#endif
                         ProcessBlk(vromfs.Files[j].Name, vromfs.Files[j].Data, vromfsOutPath, cancellationToken, vromfs);
+
+#if !DEBUG
                     }
                     catch(Exception ex)
                     {
@@ -245,7 +249,9 @@ namespace WtTools.Unpacker
                         Log($"Error unpacking file \"{vromfs.Files[j].Name}\": {ex.Message}");
                         Log($"Error unpacking file \"{vromfs.Files[j].Name}\": {ex.StackTrace}");
                         ++FilesErrored;
+
                     }
+#endif
                 }
                 if(!processAsBlk)
                 {
