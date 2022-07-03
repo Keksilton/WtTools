@@ -37,6 +37,8 @@ namespace WtTools.Unpacker
 
         private TargetFormat _targetFormat;
 
+        public List<String> LogMessages { get; set; } = new List<string>();
+        public int FilesErrored { get; set; }
 
 
         public ProcessingWorker(string inputPath, string outputPath)
@@ -222,7 +224,7 @@ namespace WtTools.Unpacker
             for (int j = 0; j < vromfs.Files.Length && !cancellationToken.IsCancellationRequested; ++j)
             {
                 CurrentSubLabel = vromfs.Files[j].Name;
-                FileCurrent = j;
+                FileCurrent = j + 1;
                 var fullPath = Path.Combine(vromfsOutPath, vromfs.Files[j].Name);
                 var targetFile = new FileInfo(fullPath);
                 var targetDir = targetFile.Directory;
@@ -230,11 +232,22 @@ namespace WtTools.Unpacker
                 {
                     targetDir.Create();
                 }
-                if (vromfs.Files[j].Name.EndsWith(".blk") && vromfs.Files[j].Size > 0)
+                bool processAsBlk = vromfs.Files[j].Name.EndsWith(".blk") && vromfs.Files[j].Size > 0;
+                if (processAsBlk)
                 {
-                    ProcessBlk(vromfs.Files[j].Name, vromfs.Files[j].Data, vromfsOutPath, cancellationToken, vromfs);
+                    try
+                    {
+                        ProcessBlk(vromfs.Files[j].Name, vromfs.Files[j].Data, vromfsOutPath, cancellationToken, vromfs);
+                    }
+                    catch(Exception ex)
+                    {
+                        processAsBlk = false;
+                        Log($"Error unpacking file \"{vromfs.Files[j].Name}\": {ex.Message}");
+                        Log($"Error unpacking file \"{vromfs.Files[j].Name}\": {ex.StackTrace}");
+                        ++FilesErrored;
+                    }
                 }
-                else
+                if(!processAsBlk)
                 {
                     if (vromfs.Files[j].Size == 0)
                     {
@@ -247,6 +260,12 @@ namespace WtTools.Unpacker
                 }
             }
             Task.WaitAll(_writeTasks.ToArray(), cancellationToken);
+        }
+
+        private void Log(string message)
+        {
+            var dt = DateTime.Now;
+            LogMessages.Add($"[{dt:MM/dd/yyyy HH:mm:ss.fff}] {message}");
         }
 
 

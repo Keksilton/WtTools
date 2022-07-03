@@ -48,6 +48,7 @@ namespace WtTools.Unpacker
                 worker.Stop();
             });
             worker.Start(TargetFormat.JSON);
+            UpdateLine(8, $"Logs:");
             while (worker.IsRunning)
             {
                 PrintStatus(worker);
@@ -59,14 +60,24 @@ namespace WtTools.Unpacker
                 PrintException(worker.LastException);
             }
         }
+        const int LOG_LINE_OFFSET = 9;
+        static int LogLine = LOG_LINE_OFFSET;
+        static int LastLogCount = 0;
 
         static void PrintStatus(ProcessingWorker worker)
         {
+            while (LastLogCount < worker.LogMessages.Count)
+            {
+                var message = worker.LogMessages[LastLogCount];
+                UpdateLine(LogLine, message);
+                ++LastLogCount;
+                LogLine += CountLines(message);
+            }
             UpdateLine(1, $"Status: {(worker.IsRunning ? "Running" : (worker.LastException == null ? "Completed" : "Errored"))}");
             UpdateLine(2, $"Files: {worker.FilesProcessed}/{worker.FilesPassed}");
             UpdateLine(3, $"Current file: {worker.CurrentFile}");
             UpdateLine(4, $"Currently processing: {worker.CurrentSubLabel?.Split('/')?.LastOrDefault()}");
-            UpdateLine(5, $"Process: {worker.FileCurrent}/{worker.FileTotal}");
+            UpdateLine(5, $"Process: {worker.FileCurrent}/{worker.FileTotal}; Errors: {worker.FilesErrored}");
             UpdateLine(6, $"Time elapsed: {worker.TimeElapsed.Elapsed.ToString()}");
         }
 
@@ -81,6 +92,20 @@ namespace WtTools.Unpacker
             Console.SetCursorPosition(0, 10);
             Console.Error.WriteLine(ex.Message);
             Console.Error.WriteLine(ex.StackTrace);
+        }
+
+        private static int CountLines(string str)
+        {
+            if (str == null)
+                throw new ArgumentNullException("str");
+            if (str == string.Empty)
+                return 0;
+            int index = -1;
+            int count = 0;
+            while (-1 != (index = str.IndexOf(Environment.NewLine, index + 1)))
+                count++;
+
+            return count + 1;
         }
 
 
