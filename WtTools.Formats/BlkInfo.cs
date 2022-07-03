@@ -55,7 +55,20 @@ namespace WtTools.Formats
                     blkData = data.AsMemory(1).ToArray();
                     break;
                 case 2:
-                    //Console.WriteLine($"packed_type:{packedType}, file:{Name}");
+
+                    using (var stream = new MemoryStream(data))
+                    using (var reader = new BinaryReader(stream))
+                    {
+                        _ = reader.ReadByte();
+                        var sizeBytes = reader.ReadBytes(3);
+                        var size = (sizeBytes[0] | (sizeBytes[1] << 8) | (sizeBytes[2] << 16));
+                        var compressedData = reader.ReadBytes(size);
+                        using (var compressedStreame = new MemoryStream(compressedData))
+                        using (var decompressionStream = (Parent == null ? new DecompressionStream(compressedStreame) : new DecompressionStream(compressedStreame, Parent.DecompressionOptions)))
+                        {
+                            blkData = decompressionStream.ReadToEnd().AsMemory(1).ToArray();
+                        }
+                    }
                     break;
                 case 3:
                     blkData = data.AsMemory(1).ToArray();
