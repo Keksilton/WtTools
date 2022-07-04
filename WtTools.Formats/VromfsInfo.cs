@@ -118,7 +118,7 @@ namespace WtTools.Formats
             {
                 var record = new FileRecord()
                 {
-                    Name = reader.BaseStream.ReadTerminatedString()
+                    Name = reader.BaseStream.ReadTerminatedString().TrimStart('/')
                 };
                 if (!dictFound && record.Name.EndsWith(".dict"))
                 {

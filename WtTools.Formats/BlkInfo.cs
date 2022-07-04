@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Bson;
+﻿using Newtonsoft.Json.Bson;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -150,22 +150,23 @@ namespace WtTools.Formats
 
         }
 
-        internal string GetStringValue(int index)
+        internal string GetStringValue(int index, bool isFromNameMap = true)
         {
-            if (NameMap.Count > (ulong)index)
+            if (NameMap.Count != 0 && isFromNameMap)
             {
                 return NameMap[index];
             }
-            else if (Parent?.NameMap.Count > (ulong)index)
+            else if((Parent?.NameMap.Count ?? 0) != 0 && isFromNameMap)
             {
                 return Parent.NameMap[index];
             }
-            else
+            else if(!isFromNameMap)
             {
                 var lgd = LargeData.Slice(index);
                 lgd = lgd.Slice(0, lgd.IndexOf((byte)0));
                 return lgd.ToArray().ToUTF8String();
             }
+            throw new NotImplementedException("Unknown scenario. Please report this issue.");
         }
 
         private BlockInfo ParseText(string[] lines, int offset = 0)
