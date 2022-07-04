@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,12 +20,13 @@ namespace WtTools.Formats.Blk
             var data = reader.ReadBytes(8);
             Id = (data[0] | (data[1] << 8) | (data[2] << 16));
             Type = (DataType)data[3];
-            int index = (data[4] | (data[5] << 8) | (data[6] << 16) | (data[7] << 24));
+            int index = (data[4] | (data[5] << 8) | (data[6] << 16) | ((data[7] & 0x7f) << 24));
             switch (Type)
             {
                 case DataType.Str:
-                    var strIndex = index - (data[7] << 24);
-                        Value = blk.GetStringValue(strIndex);
+                    var strIndex = index;
+                    var tagged = (data[7] >> 7) == 1;
+                    Value = blk.GetStringValue(strIndex, tagged);
                     break;
                 case DataType.Int:
                     Value = (data[4] | (data[5] << 8) | (data[6] << 16) | (data[7] << 24));
