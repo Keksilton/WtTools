@@ -11,5 +11,10 @@ Web interface with limited capabilities: https://keksilton.github.io/WtTools.Web
 - [x] Support for .vromfs.bin
 - [x] Support for .blk
 - [x] Support for .wrpl
+- [ ] Rewrite for better maintability
+- [ ] Add tests
+- [ ] Fix replays that include nuke
+- [ ] Use Spectre.Console
+- [ ] Support export to DB 
 - [ ] Full support for strict output
 - [ ] Add logging
