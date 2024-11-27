@@ -1,3 +1,5 @@
+# This repository is no longer in development, please use [Warthunder-Open-Source-Foundation/wt_ext_cli](https://github.com/Warthunder-Open-Source-Foundation/wt_ext_cli) instead
+
 # WtTools
 
 Project that aims to create a set of datamining tools for War Thunder and compatible games.
